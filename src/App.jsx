@@ -1,9 +1,10 @@
 import Form from './components/Form'
+import Notification from './components/Notification'
 import { useState, useEffect } from 'react'
 
 function App () {
   const [dataCountries, setDataCountries] = useState(null)
-  const [isSend, setIsSend] = useState(false)
+  const [isSucess, setIsSucess] = useState(false)
 
   useEffect(() => {
     const getDataCountries = async () => {
@@ -27,10 +28,17 @@ function App () {
     getDataCountries()
   }, [])
 
+  useEffect(() => {
+    setTimeout(() => {
+      setIsSucess(false)
+    }, 3000)
+  }, [isSucess])
+
   return (
-    <main className='grid items-center justify-center w-screen h-screen'>
+    <main className='relative grid items-center justify-center w-screen h-screen overflow-x-hidden'>
       <section className='w-[400px] h-min'>
-        <Form dataCountries={dataCountries} />
+        <Form dataCountries={dataCountries} setIsSucess={setIsSucess} />
+        <Notification isSucess={isSucess} />
       </section>
     </main>
   )

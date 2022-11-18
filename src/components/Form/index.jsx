@@ -9,41 +9,99 @@ const initialData = {
   country: ''
 }
 
-export default function Form ({ dataCountries }) {
+const errorsInForm = {}
+
+export default function Form ({ dataCountries, setIsSucess }) {
   const [addPerson] = useMutation(ADD_PERSON)
+
   const [data, setData] = useState(initialData)
   const [isSending, setIsSending] = useState(false)
+  const [errors, setErrors] = useState(errorsInForm)
+  const [dataInBlank, setDataInBlank] = useState(false)
 
-  /* useEffect(() => {
-    const addingPerson = async () => {
-      c
+  const validateName = (value) => {
+    const regex = /^[a-zA-Z ,.'-]+$/i
+    const errorsInForm = JSON.parse(JSON.stringify(errors))
+    setDataInBlank(false)
+
+    if (!regex.test(value)) {
+      setErrors({
+        ...errors,
+        name: 'El nombre no es valido'
+      })
+      return
     }
 
-    addingPerson()
-  }, [])
- */
+    if (errorsInForm.name) {
+      delete errorsInForm.name
+      setErrors(errorsInForm)
+    }
+  }
+
+  const validateCountry = (value) => {
+    const errorsInForm = JSON.parse(JSON.stringify(errors))
+    setDataInBlank(false)
+
+    if (!dataCountries.find(country => country.value === value)) {
+      setErrors({
+        ...errors,
+        country: 'Escribiste incorrectamente el país'
+      })
+      return
+    }
+
+    if (errorsInForm.country) {
+      delete errorsInForm.country
+      setErrors(errorsInForm)
+    }
+  }
+
+  const handleChange = (e) => {
+    if (e.target.name === 'name') {
+      validateName(e.target.value)
+    }
+
+    if (e.target.name === 'country') {
+      validateCountry(e.target.value)
+    }
+
+    setData({
+      ...data,
+      [e.target.name]: e.target.value
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (Object.values(errors).length !== 0) return
+
+    const dataInBlank = Object.values(data).some(valueInObject => {
+      if (valueInObject.trim() === '') {
+        return true
+      }
+      return false
+    })
+
+    if (dataInBlank) {
+      setDataInBlank(true)
+      return
+    }
+
     try {
       setIsSending(true)
-      const dataSend = await addPerson({
+
+      await addPerson({
         variables: {
           name: data.name,
           country: data.country
         }
       })
-      console.log(dataSend)
+
       setIsSending(false)
+      setIsSucess(true)
     } catch (error) {
       console.log(error)
     }
-  }
-
-  const handleChange = (e) => {
-    setData({
-      ...data,
-      [e.target.name]: e.target.value
-    })
   }
 
   return (
@@ -52,7 +110,7 @@ export default function Form ({ dataCountries }) {
         Ingresa tus datos para enviar:
       </h1>
       <label className='mt-2'>
-        <span className='text-sm font-semibold'>Introduce tu nombre:</span>
+        <span className='text-sm font-semibold'>Introduce tu nombre (obligatiorio):</span>
         <input
           type='text'
           name='name'
@@ -63,15 +121,21 @@ export default function Form ({ dataCountries }) {
         />
       </label>
       {
+        errors.name && (<p className='w-full mt-1 text-sm text-red-400'>{errors.name}</p>)
+      }
+      {
         dataCountries
           ? (
             <DataListInput
               placeholder='Introduce el nombre de tu país y seleccionalo'
-              label='Selecciona el país:'
-              onSelect={(item) => setData({
-                ...data,
-                country: item.value
-              })}
+              label='Selecciona el país: (obligatiorio)'
+              onSelect={(item) => {
+                validateCountry(item.value)
+                setData({
+                  ...data,
+                  country: item.value
+                })
+              }}
               items={dataCountries}
               className='w-full mt-4'
               listboxProps={{
@@ -89,6 +153,7 @@ export default function Form ({ dataCountries }) {
               listboxOptionProps={{
                 className: 'hover:bg-gray-400 cursor-pointer',
                 onClick: (e) => {
+                  validateCountry(e.target.id)
                   setData({
                     ...data,
                     country: e.target.id
@@ -97,9 +162,15 @@ export default function Form ({ dataCountries }) {
               }}
             />
             )
-          : (<div>Cargando</div>)
+          : (<p className='text-center mt-4'>Cargando datos de los paises ...</p>)
       }
-      <button onClick={handleSubmit} className='transition mt-6 mb-4 mx-8 px-2 py-2 font-semibold border border-slate-700 rounded-lg bg-slate-300 hover:bg-slate-400'>
+      {
+        errors.country && (<p className='w-full mt-1 text-sm text-red-400'>{errors.country}</p>)
+      }
+      {
+        (dataInBlank || Object.values(errors).length !== 0) && (<p className='w-full text-center mt-2 text-sm text-red-400'>Tienes errores o campos sin llenar en el formulario</p>)
+      }
+      <button onClick={handleSubmit} form='{}' className='transition mt-4 mb-4 mx-8 px-2 py-2 font-semibold border border-slate-700 rounded-lg bg-slate-300 hover:bg-slate-400'>
         {
           isSending ? <Loader width={40} height={40} /> : 'Enviar datos'
         }
