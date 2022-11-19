@@ -1,6 +1,6 @@
 import { ADD_PERSON } from './graphql-mutation'
-import { useState } from 'react'
 import { useMutation } from '@apollo/client'
+import { useState } from 'react'
 import DataListInput from 'react-datalist-input'
 import Loader from '../Loader'
 
@@ -15,8 +15,8 @@ export default function Form ({ dataCountries, setIsSucess }) {
   const [addPerson] = useMutation(ADD_PERSON)
 
   const [data, setData] = useState(initialData)
-  const [isSending, setIsSending] = useState(false)
   const [errors, setErrors] = useState(errorsInForm)
+  const [isSending, setIsSending] = useState(false)
   const [dataInBlank, setDataInBlank] = useState(false)
 
   const validateName = (value) => {
@@ -24,6 +24,7 @@ export default function Form ({ dataCountries, setIsSucess }) {
     const errorsInForm = JSON.parse(JSON.stringify(errors))
     setDataInBlank(false)
 
+    //* Evaluate that the name is a valid name
     if (!regex.test(value)) {
       setErrors({
         ...errors,
@@ -39,9 +40,11 @@ export default function Form ({ dataCountries, setIsSucess }) {
   }
 
   const validateCountry = (value) => {
+    //* Create a new object of errors
     const errorsInForm = JSON.parse(JSON.stringify(errors))
     setDataInBlank(false)
 
+    //* Find if the country typing or selected is in the array of countries
     if (!dataCountries.find(country => country.value === value)) {
       setErrors({
         ...errors,
@@ -50,6 +53,7 @@ export default function Form ({ dataCountries, setIsSucess }) {
       return
     }
 
+    //* Delete the error if the country is in the array
     if (errorsInForm.country) {
       delete errorsInForm.country
       setErrors(errorsInForm)
@@ -73,8 +77,11 @@ export default function Form ({ dataCountries, setIsSucess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    //* Evaluate that the form has no errors
     if (Object.values(errors).length !== 0) return
 
+    //* Evaluate if a field of the form is empty
     const dataInBlank = Object.values(data).some(valueInObject => {
       if (valueInObject.trim() === '') {
         return true
@@ -90,6 +97,7 @@ export default function Form ({ dataCountries, setIsSucess }) {
     try {
       setIsSending(true)
 
+      //* Adding person to the database
       await addPerson({
         variables: {
           name: data.name,
